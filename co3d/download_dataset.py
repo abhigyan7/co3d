@@ -34,4 +34,5 @@ if __name__ == "__main__":
         clear_archives_after_unpacking=bool(args.clear_archives_after_unpacking),
         sha256s_file=str(args.sha256_file),
         skip_downloaded_archives=not bool(args.redownload_existing_archives),
+        n_sequences_per_category=int(args.n_sequences_per_category),
     )

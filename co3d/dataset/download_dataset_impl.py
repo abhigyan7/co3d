@@ -13,6 +13,7 @@ import json
 import warnings
 
 from argparse import ArgumentParser
+from collections import defaultdict
 from typing import List, Optional
 from multiprocessing import Pool
 from tqdm import tqdm
@@ -31,6 +32,7 @@ def download_dataset(
     clear_archives_after_unpacking: bool = False,
     skip_downloaded_archives: bool = True,
     sha256s_file: Optional[str] = None,
+    n_sequences_per_category: int = -1,
 ):
     """
     Downloads and unpacks the dataset in CO3D format.
@@ -56,6 +58,8 @@ def download_dataset(
         clear_archives_after_unpacking: Delete the unnecessary downloaded archive files
             after unpacking.
         skip_downloaded_archives: Skip re-downloading already downloaded archives.
+        n_sequences_per_category: How many sequences to download 
+            per category (at maximum)
     """
 
     if checksum_check and not sha256s_file:
@@ -107,6 +111,16 @@ def download_dataset(
                 + "dataset categories."
             )
         data_links = [(c, ln, l) for c, ln, l in data_links if c in download_categories]
+    
+    if n_sequences_per_category > 0:
+        category_counts = defaultdict(int)
+        new_data_links = []
+        for (category, link_name, link) in data_links:
+            category_counts[category] += 1
+            if category_counts[category] > n_sequences_per_category:
+                continue
+            new_data_links.append((category, link_name, link))
+        data_links = new_data_links
 
     with Pool(processes=n_download_workers) as download_pool:
         print(f"Downloading {len(metadata_links)} dataset metadata files ...")
@@ -240,6 +254,14 @@ def build_arg_parser(
         action="store_true",
         default=False,
         help="Redownload the already-downloaded archives.",
+    )
+    parser.add_argument(
+        "--n_sequences_per_category",
+        type=int,
+        default=-1,
+        help=(
+            "How many sequences to download per category (at maximum)."
+        )
     )
 
     return parser
