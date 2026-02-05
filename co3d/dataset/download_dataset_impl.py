@@ -20,6 +20,36 @@ from tqdm import tqdm
 
 from .check_checksum import check_co3d_sha256
 
+shutil._UNPACK_FORMATS.pop("zip", None)
+
+import subprocess
+from pathlib import Path
+
+
+def unpack_with_7z(filename, extract_dir):
+    extract_dir = Path(extract_dir)
+    extract_dir.mkdir(parents=True, exist_ok=True)
+
+    subprocess.run(
+        [
+            "7z",
+            "x",                 # extract with full paths
+            "-y",                # assume yes
+            "-bb0",              # no progress output
+            f"-o{extract_dir}",  # output directory (no space!)
+            filename,
+        ],
+        check=True,
+    )
+
+
+shutil.register_unpack_format(
+    name="zip",
+    extensions=[".zip"],
+    function=unpack_with_7z,
+    description="ZIP via 7z",
+)
+
 
 def download_dataset(
     link_list_file: str,
